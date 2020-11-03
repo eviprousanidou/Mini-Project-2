@@ -1,197 +1,330 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<meta charset="utf-8" />
-<title>Create a time slider</title>
-<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-<script src="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js"></script>
-<link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css" rel="stylesheet" />
-<style>
-	body { margin: 0; padding: 0; }
-	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
-</style>
+    <meta charset='utf-8' />
+    <title>Create a time slider</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.3.1/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.3.1/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        #play-button {
+            background: #F14E58;
+            padding-right: 26px;
+            border-radius: 3px;
+            border: none;
+            color: white;
+            margin: 0;
+            padding: 0 12px;
+            width: 60px;
+            cursor: pointer;
+            height: 30px;
+        }
+
+        #play-button:hover {
+            background-color: #848480;
+        }
+
+        .ticks {
+            font-size: 10px;
+        }
+
+        .track,
+        .track-inset,
+        .track-overlay {
+            stroke-linecap: round;
+        }
+
+        .track {
+            stroke: #000;
+            stroke-opacity: 0.3;
+            stroke-width: 10px;
+        }
+
+        .track-inset {
+            stroke: #dcdcdc;
+            stroke-width: 8px;
+        }
+
+        .track-overlay {
+            pointer-events: stroke;
+            stroke-width: 50px;
+            stroke: transparent;
+            cursor: crosshair;
+        }
+
+        .handle {
+            fill: #fff;
+            stroke: #000;
+            stroke-opacity: 0.5;
+        }
+    </style>
 </head>
+
 <body>
-<style>
-.map-overlay {
-font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
-position: absolute;
-width: 25%;
-top: 0;
-left: 0;
-padding: 10px;
-}
- 
-.map-overlay .map-overlay-inner {
-background-color: #fff;
-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-border-radius: 3px;
-padding: 10px;
-margin-bottom: 10px;
-}
- 
-.map-overlay h2 {
-line-height: 24px;
-display: block;
-margin: 0 0 10px;
-}
- 
-.map-overlay .legend .bar {
-height: 10px;
-width: 100%;
-background: linear-gradient(to right, #fca107, #7f3121);
-}
- 
-.map-overlay input {
-background-color: transparent;
-display: inline-block;
-width: 100%;
-position: relative;
-margin: 0;
-cursor: ew-resize;
-}
-</style>
- 
-<div id="map"></div>
- 
-<div class="map-overlay top">
-<div class="map-overlay-inner">
-<h2>Significant earthquakes in 2015</h2>
-<label id="month"></label>
-<input id="slider" type="range" min="0" max="11" step="1" value="0" />
-</div>
-<div class="map-overlay-inner">
-<div id="legend" class="legend">
-<div class="bar"></div>
-<div>Magnitude (m)</div>
-</div>
-</div>
-</div>
- 
-<script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-<script>
-	mapboxgl.accessToken = 'pk.eyJ1IjoidGhlcmVhbG94IiwiYSI6ImNraDE5aWtyZDAwMWUycW5zeTQ0aGtocXgifQ.Ant11sFFannHzow1SEdrFQ';
-var map = new mapboxgl.Map({
-container: 'map',
-style: 'mapbox://styles/mapbox/light-v10',
-center: [31.4606, 20.7927],
-zoom: 0.5
-});
- 
-var months = [
-'January',
-'February',
-'March',
-'April',
-'May',
-'June',
-'July',
-'August',
-'September',
-'October',
-'November',
-'December'
-];
- 
-function filterBy(month) {
-var filters = ['==', 'month', month];
-map.setFilter('earthquake-circles', filters);
-map.setFilter('earthquake-labels', filters);
- 
-// Set the label to the month
-document.getElementById('month').textContent = months[month];
-}
- 
-map.on('load', function () {
-// Data courtesy of http://earthquake.usgs.gov/
-// Query for significant earthquakes in 2015 URL request looked like this:
-// http://earthquake.usgs.gov/fdsnws/event/1/query
-//    ?format=geojson
-//    &starttime=2015-01-01
-//    &endtime=2015-12-31
-//    &minmagnitude=6'
-//
-// Here we're using d3 to help us make the ajax request but you can use
-// Any request method (library or otherwise) you wish.
-d3.json(
-'https://docs.mapbox.com/mapbox-gl-js/assets/significant-earthquakes-2015.geojson',
-function (err, data) {
-if (err) throw err;
- 
-// Create a month property value based on time
-// used to filter against.
-data.features = data.features.map(function (d) {
-d.properties.month = new Date(d.properties.time).getMonth();
-return d;
-});
- 
-map.addSource('earthquakes', {
-'type': 'geojson',
-data: data
-});
- 
-map.addLayer({
-'id': 'earthquake-circles',
-'type': 'circle',
-'source': 'earthquakes',
-'paint': {
-'circle-color': [
-'interpolate',
-['linear'],
-['get', 'mag'],
-6,
-'#FCA107',
-8,
-'#7F3121'
-],
-'circle-opacity': 0.75,
-'circle-radius': [
-'interpolate',
-['linear'],
-['get', 'mag'],
-6,
-20,
-8,
-40
-]
-}
-});
- 
-map.addLayer({
-'id': 'earthquake-labels',
-'type': 'symbol',
-'source': 'earthquakes',
-'layout': {
-'text-field': [
-'concat',
-['to-string', ['get', 'mag']],
-'m'
-],
-'text-font': [
-'Open Sans Bold',
-'Arial Unicode MS Bold'
-],
-'text-size': 12
-},
-'paint': {
-'text-color': 'rgba(0,0,0,0.5)'
-}
-});
- 
-// Set filter to first month of the year
-// 0 = January
-filterBy(0);
- 
-document
-.getElementById('slider')
-.addEventListener('input', function (e) {
-var month = parseInt(e.target.value, 10);
-filterBy(month);
-});
-}
-);
-});
-</script>
- 
+
+    <style>
+        .map-overlay {
+            font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+            position: absolute;
+            width: 25%;
+            top: 0;
+            left: 0;
+            padding: 10px;
+        }
+
+        .map-overlay .map-overlay-inner {
+            background-color: #fff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.20);
+            border-radius: 3px;
+            padding: 10px;
+            margin-bottom: 10px;
+            width: 400px;
+        }
+
+        .map-overlay h2 {
+            line-height: 24px;
+            display: block;
+            margin: 0 0 10px;
+        }
+
+        .map-overlay .legend .bar {
+            height: 10px;
+            width: 100%;
+            background: linear-gradient(to right, #FC7B02, #893A01);
+        }
+
+        .map-overlay #slider {
+            background-color: transparent;
+            display: inline-block;
+            width: 100%;
+            position: relative;
+            margin: 10px auto;
+            cursor: ew-resize;
+        }
+    </style>
+
+    <div id='map'></div>
+
+    <div class='map-overlay top'>
+        <div class='map-overlay-inner'>
+            <h2>Earthquakes over a Magnitude of 6 in 2019</h2>
+            <label id='month'></label>
+            <div id="slider"></div>
+        </div>
+        <div class='map-overlay-inner'>
+            <div id='legend' class='legend'>
+                <div class='bar'></div>
+                <div>Magnitude (m)</div>
+            </div>
+        </div>
+        <button id="play-button">Play</button>
+    </div>
+
+    <script src="//d3js.org/d3.v4.min.js" charset='utf-8'></script>
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1Ijoiemhhbmd6aWhhbyIsImEiOiJjamN6dDF1bzMwenphMzNuMjlqaG1vOTJlIn0.VdSfOPUC85YcWqs3LZeXmA';
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/light-v10',
+            center: [31.4606, 20.7927],
+            zoom: 0.5
+        });
+
+        var months = [
+            'January',
+            'February',
+            'March',
+            'April',
+            'May',
+            'June',
+            'July',
+            'August',
+            'September',
+            'October',
+            'November',
+            'December'
+        ];
+
+        function filterBy(month) {
+            var filters = ['==', 'month', month];
+            map.setFilter('earthquake-circles', filters);
+            map.setFilter('earthquake-labels', filters);
+
+            // Set the label to the month
+            document.getElementById('month').textContent = months[month];
+        }
+
+        map.on('load', function () {
+            d3.json('https://earthquake.usgs.gov/fdsnws/event/1/query.geojson?starttime=2019-01-01%2000:00:00&endtime=2020-12-31%2023:59:59&minmagnitude=6&orderby=time', function (err, data) {
+                if (err) throw err;
+
+                // Create a month property value based on time
+                // used to filter against.
+                data.features = data.features.map(function (d) {
+                    d.properties.month = new Date(d.properties.time).getMonth();
+                    return d;
+                });
+
+                map.addSource('earthquakes', {
+                    'type': 'geojson',
+                    data: data
+                });
+
+                map.addLayer({
+                    'id': 'earthquake-circles',
+                    'type': 'circle',
+                    'source': 'earthquakes',
+                    'paint': {
+                        'circle-color': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'mag'],
+                            6, '#FC7B02',
+                            8, '#893A01'
+                        ],
+                        'circle-opacity': 0.75,
+                        'circle-radius': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'mag'],
+                            6, 20,
+                            8, 40
+                        ]
+                    }
+                });
+
+                map.addLayer({
+                    'id': 'earthquake-labels',
+                    'type': 'symbol',
+                    'source': 'earthquakes',
+                    'layout': {
+                        'text-field': ['concat', ['to-string', ['get', 'mag']], 'm'],
+                        'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+                        'text-size': 12
+                    },
+                    'paint': {
+                        'text-color': 'rgba(0,0,0,0.5)'
+                    }
+                });
+
+                filterBy(0);
+
+                var margin = { top: 50, right: 10, bottom: 0, left: 10 },
+                    width = document.getElementById('slider').clientWidth - margin.left - margin.right,
+                    height = 50 - margin.top - margin.bottom;
+
+                var moving = false;
+                var currentValue = 0;
+                var targetValue = width;
+                console.log(targetValue);
+                var slider = d3.select("#slider")
+                    .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .attr("transform", "translate(" + 0 + "," + height + ")");
+
+                var playButton = d3.select("#play-button");
+                var x = d3.scaleLinear()
+                    .domain([0, months.length - 1])
+                    .range([0, targetValue])
+                    .clamp(true);
+
+                slider.append("line")
+                    .attr("class", "track")
+                    .attr("x1", x.range()[0])
+                    .attr("x2", x.range()[1])
+                    .select(function () { return this.parentNode.appendChild(this.cloneNode(true)); })
+                    .attr("class", "track-inset")
+                    .select(function () { return this.parentNode.appendChild(this.cloneNode(true)); })
+                    .attr("class", "track-overlay")
+                    .call(d3.drag()
+                        .on("start.interrupt", function () { slider.interrupt(); })
+                        .on("start drag", function () {
+                            currentValue = d3.event.x;
+                            console.log(currentValue)
+                            update(x.invert(currentValue));
+                        })
+                    );
+
+                slider.insert("g", ".track-overlay")
+                    .attr("class", "ticks")
+                    .attr("transform", "translate(0," + 18 + ")")
+                    .selectAll("text")
+                    .data(x.ticks(10))
+                    .enter()
+                    .append("text")
+                    .attr("x", x)
+                    .attr("y", 10)
+                    .attr("text-anchor", "middle")
+                    .text(function (d) {
+                        return (d + 1);
+                    });
+
+                var handle = slider.insert("circle", ".track-overlay")
+                    .attr("class", "handle")
+                    .attr("r", 9);
+
+                var labels = slider.append("g").append("text")
+                    .attr("class", "labels")
+                    .attr("text-anchor", "middle")
+                    .text(months[0])
+                    .attr("transform", "translate(0," + (-15) + ")")
+                    .style("fill", "#4F442B")
+
+                playButton
+                    .on("click", function () {
+                        var button = d3.select(this);
+                        if (button.text() == "Pause") {
+                            moving = false;
+                            clearInterval(timer);
+                            button.text("Play");
+                        } else {
+                            moving = true;
+                            timer = setInterval(step, 1000);
+                            button.text("Pause");
+                        }
+                        console.log("Slider moving: " + moving);
+                    })
+
+                function step() {
+                    update(x.invert(currentValue));
+                    currentValue = currentValue + (targetValue / (months.length));
+                    if (currentValue > targetValue) {
+                        moving = false;
+                        currentValue = 0;
+                        clearInterval(timer);
+                        playButton.text("Play");
+                    }
+                }
+
+                function update(month) {
+                    var month = parseInt(month, 10);
+                    console.log(month)
+                    handle.attr("cx", x(month));
+
+                    labels
+                        .attr("x", x(month))
+                        .text(months[month]);
+
+                    filterBy(month);
+                }
+            });
+        });
+    </script>
+
 </body>
+
 </html>
