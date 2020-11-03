@@ -1,0 +1,23 @@
+body {
+    padding-right: 70px;
+    padding-top: 20px; 
+    background-color: white;
+}
+
+h1 {
+    font-weight: 600px;
+}
+
+img {
+    padding-bottom: 40px;
+}
+
+div{
+    text-align: justify;
+}
+
+.first {
+    float: left;
+    padding: 15px;
+    width: 50%;
+  }
