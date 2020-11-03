@@ -4,44 +4,45 @@
         <meta charset="utf-8"> 
         <title> Earthquakes </title>
         <script src="http://d3js.org/d3.v6.min.js"></script>
-        <link rel="stylesheet" href="style.css">
+        
             <!-- Milligram CSS -->
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css">
+        <link rel="stylesheet" href="style.css">
         <script src="https://d3js.org/d3.v6.min.js"></script>
         <script src="./script.js" defer type="module"></script>
+        <!-- <script src="./main.js" defer type="module"></script> -->
     </head>
     <body>
-        <div class="container">
-            <div class="row">
-                <div class="column">
-                    <h1> Mini Project 3</h1>
-                    <h3>Earthquakes, 1900-2020</h3>
-                    
-                    <div class="scatterplot">
-      
+        <div class="dropdown">
+            <button class="dropbtn"><img src="./up_arrow.png"></button>
+            <div class="dropdown-content">
+                <a id="eight">WE ARE 8</a>
+                    <div id="eight-names">
+                        <p>
+                            Hao Niu<br>Paraskevi Prousanidou<br>Zhihao Guo
+                        </p>
                     </div>
-                    <div class="barchart"></div>
-                    
-                    <div>
-                        <a href="hello.html"><button>Interactive World Map</button></a>
-                    </div>
-
-                    <div>
-                        <a href="index-mark.html"><button>Earthquake Country Map</button></a>
-                    </div>
-
-
-                    <div>
-                        <a href="about.html"><button>About this project</button></a>
-                    </div>
-                </div>
+                <a href="#top">Top</a>
             </div>
-
-            <script src="./main.js" defer type="module"></script>
-    
         </div>
+        <div class="container">
+            <h1 id="top"> Mini Project 3</h1>
+            <h3>Earthquakes, 1900-2020</h3>
+
+            <div class="scatterplot"></div>
+        
+            <div class="barchart"></div>
+
+            <a href="hello.html"><button>Interactive World Map</button></a>
+            <a href="index-mark.html"><button>Earthquake Country Map</button></a>
+            <a href="about.html"><button>About this project</button></a>
+
+        </div>
+            
+
+            
             
     </body>
 </html>
